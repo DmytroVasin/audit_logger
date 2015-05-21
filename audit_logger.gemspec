@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Vasin Dmitriy"]
   spec.email         = ["vasindima779@gmail.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = "Audit logger for Rails apps."
+  spec.description   = "Logger which creates additional files for a more orderly logging information in Rails apps."
+  spec.homepage      = "https://github.com/DmytroVasin/audit_logger"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
@@ -27,6 +27,8 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "bundler", "~> 1.9"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency 'rails', ">= #{AuditLogger::RAILS_VERSION}"
+  spec.add_development_dependency 'bundler', '~> 1.9'
+  spec.add_development_dependency 'rake', '~> 10.0'
+  spec.add_development_dependency 'railties', ">= #{AuditLogger::RAILS_VERSION}"
 end
