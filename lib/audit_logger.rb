@@ -17,7 +17,9 @@ module AuditLogger
                   :al_shift_age,
                   :al_shift_size
 
-    def initialize(file_path, opts = {})
+    def initialize(file_path=STDOUT, opts = {})
+      # ADD THREADs!!!!
+
       # user @al_timestamp with attr_reader
       self.al_timestamp  = opts[:timestamp] || true
       self.al_pid        = opts[:pid] || false
@@ -54,17 +56,19 @@ module AuditLogger
     end
 
     def init_log_file(path)
-      # Add IO!
-      # can we use Logger methods #open_logfile, #create_logfile?
-
-      FileUtils.mkdir_p(File.dirname(path))
-      File.open(path, 'a').tap {|file|
-        file.sync = true
-        @log_file_name = File.basename(file.path)
-      }
+      if path == File::NULL || path == STDOUT
+        @log_file_name = 'IO'
+        path
+      else
+        FileUtils.mkdir_p(File.dirname(path)) # IN GEM INITIALIZE! "rails g audit:install" -> creates dirrectory!
+        File.open(path, 'a').tap {|file|
+          file.sync = true
+          @log_file_name = File.basename(file.path)
+        }
+      end
     end
 
-    def wrap_with_message block_name, before:, after:, &block
+    def wrap_with_message(block_name, before:, after:, &block)
       message_block(block_name, opening: true) if before
       result = block.call if block_given?
       message_block(block_name, opening: false) if after

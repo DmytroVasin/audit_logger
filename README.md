@@ -1,6 +1,7 @@
 # AuditLogger
 
-This gem implements simple and separated Rails Logger.
+This gem implements simple and separated Rails Logger for any action that you want.
+If you want separate logger for email notification, data import, migration this is what you need.
 
 ## Installation
 
@@ -39,7 +40,7 @@ After running bundle install, run the generator:
   To create new logger you need instantiate `AuditLogger::Audit`
   First argument is name of the logger file.
 
-    ::CATEGORY_LOG     = AuditLogger::Audit.new("#{log_path_with_env}_category.log")
+    ::CATEGORY_LOG = AuditLogger::Audit.new("#{log_path_with_env}_category.log")
   Also if you want, you can insert `File::NULL` or `STDOUT` as first argument for sent output into `/dev/null/` or into console accordingly.
 
   Additional arguments in initialization:
@@ -75,10 +76,10 @@ After running bundle install, run the generator:
 
   Logger output:
 
-  # log/audit/development_product.log
-  [ 2015-05-22 10:55:35 | INFO | pid: 81767 | <start_of>: This is rake task ]
-  [ 2015-05-22 10:55:35 | INFO | pid: 81767 | Output some information ]
-  [ 2015-05-22 10:55:35 | INFO | pid: 81767 | </end_of>: This is rake task ]
+    # log/audit/development_product.log
+    [ 2015-05-22 10:55:35 | INFO | pid: 81767 | <start_of>: This is rake task ]
+    [ 2015-05-22 10:55:35 | INFO | pid: 81767 | Output some information ]
+    [ 2015-05-22 10:55:35 | INFO | pid: 81767 | </end_of>: This is rake task ]
 
 
 ## Error Handling:
@@ -107,7 +108,7 @@ After running bundle install, run the generator:
       end
     end
 
-    relaunch rake task and you will see next log:
+  relaunch rake task and you will see next log:
 
     # log/audit/development_product.log
     [ 2015-05-22 11:05:08 | INFO | pid: 83296 | <start_of>: This is rake task ]
