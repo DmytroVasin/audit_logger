@@ -1,8 +1,6 @@
 # AuditLogger
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/audit_logger`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+This gem implements simple and separated Rails Logger.
 
 ## Installation
 
@@ -16,19 +14,130 @@ And then execute:
 
     $ bundle
 
-Or install it yourself as:
+After running bundle install, run the generator:
 
-    $ gem install audit_logger
+    $ rails generate audit:install
 
 ## Usage
+  The installer creates `config/initializers/audit.rb` file which implement dummy setup of audit logger.
 
-TODO: Write usage instructions here
+    unless Rails.env.test?
+      log_path_with_env = "#{Rails.root}/log/audit/#{Rails.env}"
 
-## Development
+      ::ERROR_LOG    = AuditLogger::Audit.new("#{log_path_with_env}_error.log")
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `bin/console` for an interactive prompt that will allow you to experiment.
+      # ::AUDIT_NULL   = Audit::AuditLogger.new(File::NULL)
+      # ::AUDIT_STDOUT = Audit::AuditLogger.new(STDOUT)
+      # ::PRODUCT_LOG  = AuditLogger::Audit.new("#{log_path_with_env}_product.log", timestamp: true, pid: true, severity: true)
+    end
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release` to create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+
+  By default all files will be generated in `log/audit/` folder, if you want to change this behavior just change `#{Rails.root}/log/audit/#{Rails.env}` and reload server.
+  All exception which will be rescued will be inserted into `ERROR_LOG`
+
+## Setup own logger
+  To create new logger you need instantiate `AuditLogger::Audit`
+  First argument is name of the logger file.
+
+    ::CATEGORY_LOG     = AuditLogger::Audit.new("#{log_path_with_env}_category.log")
+  Also if you want, you can insert `File::NULL` or `STDOUT` as first argument for sent output into `/dev/null/` or into console accordingly.
+
+  Additional arguments in initialization:
+
+    # by default
+    # THREAD TBD!
+    timestamp: true
+    pid: false
+    severity: false
+
+  This option influence on otput which will be showed in the log file.
+
+
+## Example of usage:
+  Lets add product logger into `config/initializers/audit.rb` and enable all parametrs:
+
+    ::PRODUCT_LOG = Audit::AuditLogger.new("#{log_path_with_env}_product.log", timestamp: true, pid: true, severity: true)
+
+  and use logger inside the rake task: `lib/tasks/products.rake`
+
+    namespace :products do
+      desc '...'
+
+      task :do_something => :environment do
+        PRODUCT_LOG.audit 'This is rake task' do
+          # Do something
+          PRODUCT_LOG.info 'Output some information'
+        end
+      end
+    end
+
+  lets run it `rake products:do_something`
+
+  Logger output:
+
+  # log/audit/development_product.log
+  [ 2015-05-22 10:55:35 | INFO | pid: 81767 | <start_of>: This is rake task ]
+  [ 2015-05-22 10:55:35 | INFO | pid: 81767 | Output some information ]
+  [ 2015-05-22 10:55:35 | INFO | pid: 81767 | </end_of>: This is rake task ]
+
+
+## Error Handling:
+  Method audit can accept second argument: `log_exception_only`
+
+    PRODUCT_LOG.audit 'This is rake task', log_exception_only: true do # ( log_exception_only = false by default. )
+
+  When you run rake task with that option, you does not see any logging at all.
+  But lets add some exception into our rake task:
+
+    class NotOurError < ::StandardError; end
+    namespace :products do
+      desc '...'
+
+      task :do_something => :environment do
+        PRODUCT_LOG.audit 'This is rake task', log_exception_only: true do
+          # Do something
+          begin
+            raise NotOurError, "Error A"
+          rescue => error
+            raise "Error B"
+          end
+
+          PRODUCT_LOG.info 'Output some information'
+        end
+      end
+    end
+
+    relaunch rake task and you will see next log:
+
+    # log/audit/development_product.log
+    [ 2015-05-22 11:05:08 | INFO | pid: 83296 | <start_of>: This is rake task ]
+    [ 2015-05-22 11:05:08 | ERROR | pid: 83296 | ERROR OCCURRED. See details in the Error Log. ]
+    [ 2015-05-22 11:05:08 | INFO | pid: 83296 | </end_of>: This is rake task ]
+
+    # log/audit/development_error.log
+    [ 2015-05-22 11:05:08 | <start_of>: This is rake task // development_product.log ]
+    [ 2015-05-22 11:05:08 | RuntimeError: Error B. Cause exception: ]
+    [ 2015-05-22 11:05:08 | NotOurError: Error A. Call stack: ]
+    <!-- REPRODUCE WITH GEM! -->
+    <!-- TBD! -->
+    [ 2015-05-22 11:05:08 | </end_of>: This is rake task // development_product.log ]
+
+## Exception resque:
+  When you launch your rake task which cause exception you always got exception and stop running of the code.
+
+  With next option exception will be intercepted and logged but not raised on the top:
+
+    PRODUCT_LOG.audit 'This is rake task', do_raise: false do
+
+  If you set `do_raise` option into `false` state you will have same log as in previous example ( fully logged ),
+  but in terminal output you will see nothin. This option needed when you iterate something and don't want to stop full loop if one case fall with exception
+
+  Also you can use `LOGGER#audit_with_resque` method for such purpose instead of `LOGGER#audit`.
+
+    PRODUCT_LOG.audit_with_resque 'This is rake task' do
+
+## ActiveRecord exceptions:
+  TBD!
 
 ## Contributing
 
