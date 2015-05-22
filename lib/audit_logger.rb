@@ -10,22 +10,21 @@ module AuditLogger
 
     include AuditLogger::AuditMessageStyles
 
-    attr_reader :log_file_name
-    attr_accessor :al_timestamp,
-                  :al_pid,
-                  :al_severity,
-                  :al_shift_age,
-                  :al_shift_size,
-                  :al_thread
+    attr_reader :log_file_name,
+                :al_timestamp,
+                :al_pid,
+                :al_severity,
+                :al_shift_age,
+                :al_shift_size,
+                :al_thread
 
     def initialize(file_path=STDOUT, opts = {})
-      # user @al_timestamp with attr_reader
-      self.al_timestamp  = opts[:timestamp] || true
-      self.al_pid        = opts[:pid] || false
-      self.al_severity   = opts[:severity] || false
-      self.al_thread     = opts[:thread] || false
-      self.al_shift_age  = opts[:shift_age] || 0
-      self.al_shift_size = opts[:shift_size] || 2*1024*1024
+      @al_timestamp  = opts[:timestamp] || true
+      @al_pid        = opts[:pid] || false
+      @al_severity   = opts[:severity] || false
+      @al_thread     = opts[:thread] || false
+      @al_shift_age  = opts[:shift_age] || 0
+      @al_shift_size = opts[:shift_size] || 2*1024*1024
 
 
       log_file = init_log_file(file_path)
