@@ -22,15 +22,17 @@ After running bundle install, run the generator:
 ## Usage
   The installer creates `config/initializers/audit.rb` file which implement dummy setup of audit logger.
 
-    unless Rails.env.test?
-      log_path_with_env = "#{Rails.root}/log/audit/#{Rails.env}"
+    ```ruby
+      unless Rails.env.test?
+        log_path_with_env = "#{Rails.root}/log/audit/#{Rails.env}"
 
-      ::ERROR_LOG    = AuditLogger::Audit.new("#{log_path_with_env}_error.log")
+        ::ERROR_LOG = Audit::AuditLogger.new("#{log_path_with_env}_error.log", timestamp: true, pid: true, severity: true, thread: true)
 
-      # ::AUDIT_NULL   = Audit::AuditLogger.new(File::NULL)
-      # ::AUDIT_STDOUT = Audit::AuditLogger.new(STDOUT)
-      # ::PRODUCT_LOG  = AuditLogger::Audit.new("#{log_path_with_env}_product.log", timestamp: true, pid: true, severity: true)
-    end
+        # ::AUDIT_NULL   = Audit::AuditLogger.new(File::NULL)
+        # ::AUDIT_STDOUT = Audit::AuditLogger.new(STDOUT)
+        # ::PRODUCT_LOG  = AuditLogger::Audit.new("#{log_path_with_env}_product.log")
+      end
+    ```
 
 
   By default all files will be generated in `log/audit/` folder, if you want to change this behavior just change `#{Rails.root}/log/audit/#{Rails.env}` and reload server.
@@ -48,6 +50,7 @@ After running bundle install, run the generator:
     # by default
     # THREAD TBD!
     timestamp: true
+    thread: true
     pid: false
     severity: false
 
@@ -136,6 +139,19 @@ After running bundle install, run the generator:
   Also you can use `LOGGER#audit_with_resque` method for such purpose instead of `LOGGER#audit`.
 
     PRODUCT_LOG.audit_with_resque 'This is rake task' do
+
+## Nested usage:
+  You can use logger in nested way for more deeper detalisation:
+
+    ```ruby
+      PRODUCT_LOG.audit_with_resque "#{@user.id} #{@user.name}" do
+        @user.posts.each do |post|
+          PRODUCT_LOG.audit "#{post.id} #{user.name}' do
+            # do something.
+          end
+        end
+      end
+    ```
 
 ## ActiveRecord exceptions:
   TBD!

@@ -3,7 +3,7 @@ module AuditLogger
     private
 
     def format_message(severity, timestamp, progname, msg)
-      "[#{date_info(timestamp)}#{severity_info(severity)}#{pid_info}#{msg} ]\n"
+      "[#{date_info(timestamp)}#{severity_info(severity)}#{pid_info}#{thread_info}#{msg} ]\n"
     end
 
     def message_block(block_name, opening:)
@@ -31,6 +31,10 @@ module AuditLogger
       messages.each do |message|
         ERROR_LOG.error " -> ..#{message}"
       end
+    end
+
+    def thread_info
+      " thread: #{Thread.current.object_id} |" if al_thread
     end
   end
 end
