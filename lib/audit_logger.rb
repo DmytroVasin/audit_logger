@@ -2,8 +2,10 @@ require 'audit_logger/version'
 require 'audit_logger/railtie' if defined?(Rails)
 require 'rails'
 
+require 'audit_logger/audit_message_styles'
+
 module AuditLogger
-  class Audit
+  class Audit < Logger
     APP_DIR_PATH = Rails.root.to_s
 
     include AuditLogger::AuditMessageStyles
@@ -54,6 +56,8 @@ module AuditLogger
     def init_log_file(path)
       # Add IO!
       # can we use Logger methods #open_logfile, #create_logfile?
+
+      FileUtils.mkdir_p(File.dirname(path))
       File.open(path, 'a').tap {|file|
         file.sync = true
         @log_file_name = File.basename(file.path)
