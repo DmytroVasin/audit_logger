@@ -24,7 +24,7 @@ module AuditLogger
     end
 
     def exception_message(e)
-      " #{e.class}: #{e.to_s}."
+      " #{e.class}: #{e.to_s.squish}."
     end
 
     def call_stack_output_messages(messages)

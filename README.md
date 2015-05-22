@@ -17,7 +17,7 @@ And then execute:
 
 After running bundle install, run the generator:
 
-    $ rails generate audit:install
+    $ rails generate audit_logger:install
 
 ## Usage
   The installer creates `config/initializers/audit.rb` file which implement dummy setup of audit logger.
@@ -33,6 +33,8 @@ After running bundle install, run the generator:
         # ::PRODUCT_LOG  = AuditLogger::Audit.new("#{log_path_with_env}_product.log")
       end
     ```
+
+    And its creates `log/audit/` folder for future log files.
 
 
   By default all files will be generated in `log/audit/` folder, if you want to change this behavior just change `#{Rails.root}/log/audit/#{Rails.env}` and reload server.

@@ -7,6 +7,8 @@ module AuditLogger
     desc "Generates a file with initial setup of logger instans"
 
     def copy_initializer
+      FileUtils.mkdir_p("#{Rails.root}/log/audit/")
+
       copy_file "audit.rb", "config/initializers/audit.rb"
     end
   end

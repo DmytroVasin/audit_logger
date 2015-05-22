@@ -6,8 +6,6 @@ require 'audit_logger/audit_message_styles'
 
 module AuditLogger
   class Audit < Logger
-    APP_DIR_PATH = Rails.root.to_s
-
     include AuditLogger::AuditMessageStyles
 
     attr_reader :log_file_name,
@@ -59,7 +57,6 @@ module AuditLogger
         @log_file_name = 'IO'
         path
       else
-        FileUtils.mkdir_p(File.dirname(path)) # IN GEM INITIALIZE! "rails g audit:install" -> creates dirrectory!
         File.open(path, 'a').tap {|file|
           file.sync = true
           @log_file_name = File.basename(file.path)
@@ -77,42 +74,37 @@ module AuditLogger
 
     def log_exception(block_name, e)
       error ' ERROR OCCURRED. See details in the Error Log.'
-      # return if e.respond_to?(:logged?) && e.logged?
 
       ERROR_LOG.audit("#{block_name} // #{log_file_name}") do
         begin
           write_exception_details(e)
-          # def e.logged?
-          #   true
-          # end
-        rescue Exception => e # catch ALL Exceptions, but not StandardError only
-          error " Error during writing to log: #{e}" # do not raise the exception again regardless to RESCUE_FROM_EXCEPTIONS
+        rescue Exception => e
+          error " Error during writing to log: #{e}"
         end
       end
     end
 
     def filter_call_stack_trace(e)
       e.backtrace.map { |trace_level|
-        # File.basename(trace_level)
-        trace_level.sub(Rails.root.to_s, '') if APP_DIR_PATH.in?(trace_level)
+        trace_level.sub(rails_root, '') if rails_root.in?(trace_level)
       }.compact
     end
 
     def write_exception_details(e)
-      # record_errors = "ActiveRecord errors: #{e.record.errors.full_messages}" if e.is_a?(ActiveRecord::RecordInvalid) || e.is_a?(ActiveRecord::RecordNotSaved)
-      # unless e.cause
-        # error "#{e.class} #{e.to_s} #{record_errors}, Call stack: #{filter_call_stack_trace(e).join "\n"}"
-      # else
-      # binding.pry
+      record_errors = "ActiveRecord errors: #{e.record.errors.messages}" if e.is_a?(ActiveRecord::RecordInvalid) || e.is_a?(ActiveRecord::RecordNotSaved)
 
       if e.cause
+        ERROR_LOG.error "AR SAVE ERROR: #{record_errors}" if record_errors
         ERROR_LOG.error "#{exception_message(e)} Cause exception:"
-        write_exception_details(e.cause) if e.cause
+        write_exception_details(e.cause)
       else
-        #   # #{record_errors} if active_record...
         ERROR_LOG.error "#{exception_message(e)} Call stack:"
         call_stack_output_messages(filter_call_stack_trace(e))
       end
+    end
+
+    def rails_root
+      @rails_root ||= Rails.root.to_s
     end
   end
 end
