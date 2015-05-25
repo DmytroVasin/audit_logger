@@ -16,7 +16,7 @@ module AuditLogger
                 :al_shift_size,
                 :al_thread
 
-    def initialize(file_path=STDOUT, opts = {})
+    def initialize(file_name=STDOUT, opts = {})
       @al_timestamp  = opts[:timestamp] || true
       @al_pid        = opts[:pid] || false
       @al_severity   = opts[:severity] || false
@@ -25,7 +25,7 @@ module AuditLogger
       @al_shift_size = opts[:shift_size] || 2*1024*1024
 
 
-      log_file = init_log_file(file_path)
+      log_file = init_log_file(file_name)
 
       super(log_file, al_shift_age, al_shift_size)
     end
@@ -52,14 +52,16 @@ module AuditLogger
       end
     end
 
-    def init_log_file(path)
-      if path == File::NULL || path == STDOUT
+    def init_log_file(file_name)
+      if file_name == File::NULL || file_name == STDOUT
         @log_file_name = 'IO'
-        path
+        file_name
       else
-        File.open(path, 'a').tap {|file|
+        @log_file_name = "#{file_name}.log"
+        FileUtils.mkdir_p("#{default_audit_path}")
+
+        File.open("#{default_audit_path}/#{log_file_name}", 'a').tap {|file|
           file.sync = true
-          @log_file_name = File.basename(file.path)
         }
       end
     end
@@ -105,6 +107,14 @@ module AuditLogger
 
     def rails_root
       @rails_root ||= Rails.root.to_s
+    end
+
+    def default_audit_path
+      "#{rails_root}/log/#{folder_name}/#{Rails.env}"
+    end
+
+    def folder_name
+      'audit'
     end
   end
 end
